@@ -75,7 +75,7 @@ def _compute_gdca_scores(alignment, alignment_T, verbose, min_separation=5):
     return results, score_list
 
 
-def run(align_file, verbose=False):
+def run(align_file: str, verbose=False):
     if verbose:
         print('Loading data')
     output_file = Path(align_file).with_suffix('.txt')
@@ -100,7 +100,7 @@ def main():
     # aligned a3m or fasta (one line)
     align_file = Path(argv[1]).resolve()
     assert align_file.exists()
-    run(align_file, verbose=False)
+    run(str(align_file), verbose=False)
     return
 
 
