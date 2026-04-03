@@ -1,3 +1,6 @@
+from pathlib import Path
+from sys import argv
+
 import numpy as np
 from scipy import linalg
 from operator import itemgetter
@@ -37,7 +40,17 @@ def _compute_FN(mJ, n_cols: int, alphabet_size: int):
     return FN, _gdca.apc_correction(FN), FN_all
 
 
-def _compute_gdca_scores(alignment, alignment_T, verbose):
+def compute_ranking(scores, min_separation=5):
+    N = scores.shape[0]
+    score_list = list()
+    for i in range(N-min_separation):
+        for j in range(i+min_separation, N):
+            score_list.append((i+1, j+1, scores[i,j]))
+    score_list.sort(key=itemgetter(2), reverse=True)
+    return score_list
+
+
+def _compute_gdca_scores(alignment, alignment_T, verbose, min_separation=5):
     alphabet_size = alignment.max()
 
     n_cols = alignment_T.shape[1]
@@ -58,25 +71,20 @@ def _compute_gdca_scores(alignment, alignment_T, verbose):
     covar_FN, covar_FN_corrected, covar_FN_all = _compute_FN(covar, n_cols, alphabet_size)
     results = dict(gdca=FN, gdca_corr=FN_corr, gdca_expanded=FN_all, eff_seq=meff, seq=depth,
                    covar_FN=covar_FN, covar_FN_corr=covar_FN_corrected, covar_expanded=covar_FN_all)
-    return results
+    score_list = compute_ranking(FN_corr, min_separation)
+    return results, score_list
 
 
-def compute_ranking(scores, outfile, min_separation=5):
-    N = scores.shape[0]
-    score_lst = []
-    for i in range(N-min_separation):
-        for j in range(i+min_separation, N):
-            score_lst.append((i+1, j+1, scores[i,j]))
-    score_lst.sort(key=itemgetter(2), reverse=True)
-    return score_lst
-
-
-def run(path, verbose=False):
+def run(align_file, output_file, verbose=False):
     if verbose:
         print('Loading data')
-    ali = _load_data.load_a3m(path)
-
-    return _compute_gdca_scores(np.ascontiguousarray(ali), np.ascontiguousarray(ali.T), verbose)
+    align = _load_data.load_a3m(align_file)
+    results, score_list =  _compute_gdca_scores(np.ascontiguousarray(align), np.ascontiguousarray(align.T), verbose)
+    with open(output_file, 'w') as f:
+        for i, j, score in score_list:
+            f.write(f'{i},{j},{score}\n')
+    print(f'Output file: {output_file}')
+    return
 
 
 def compute_weights(path, theta=None):
@@ -85,3 +93,16 @@ def compute_weights(path, theta=None):
         theta = -1.
 
     return _gdca.compute_weights(np.ascontiguousarray(ali), np.ascontiguousarray(ali.T), theta)
+
+
+def main():
+    # aligned a3m or fasta (one line)
+    align_file = Path(argv[1])
+    output_file = align_file.with_suffix('.txt')
+    assert align_file.exists()
+    run(align_file, output_file, verbose=False)
+    return
+
+
+if __name__ == '__main__':
+    main()
