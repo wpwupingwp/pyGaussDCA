@@ -75,16 +75,17 @@ def _compute_gdca_scores(alignment, alignment_T, verbose, min_separation=5):
     return results, score_list
 
 
-def run(align_file, output_file, verbose=False):
+def run(align_file, verbose=False):
     if verbose:
         print('Loading data')
+    output_file = align_file.with_suffix('.txt')
     align = _load_data.load_a3m(align_file)
     results, score_list =  _compute_gdca_scores(np.ascontiguousarray(align), np.ascontiguousarray(align.T), verbose)
     with open(output_file, 'w') as f:
         for i, j, score in score_list:
             f.write(f'{i},{j},{score}\n')
     print(f'Output file: {output_file}')
-    return
+    return output_file
 
 
 def compute_weights(path, theta=None):
@@ -98,9 +99,8 @@ def compute_weights(path, theta=None):
 def main():
     # aligned a3m or fasta (one line)
     align_file = Path(argv[1])
-    output_file = align_file.with_suffix('.txt')
     assert align_file.exists()
-    run(align_file, output_file, verbose=False)
+    run(align_file, verbose=False)
     return
 
 
