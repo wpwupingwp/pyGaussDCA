@@ -1,4 +1,5 @@
 .idea/
+*.cpp
 *.pyc
 *.pyo
 *.swp

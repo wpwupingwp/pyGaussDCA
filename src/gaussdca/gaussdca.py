@@ -1,5 +1,6 @@
 import numpy as np
 from scipy import linalg
+from operator import itemgetter
 
 from . import _gdca
 from . import _load_data
@@ -58,6 +59,16 @@ def _compute_gdca_scores(alignment, alignment_T, verbose):
     results = dict(gdca=FN, gdca_corr=FN_corr, gdca_expanded=FN_all, eff_seq=meff, seq=depth,
                    covar_FN=covar_FN, covar_FN_corr=covar_FN_corrected, covar_expanded=covar_FN_all)
     return results
+
+
+def compute_ranking(scores, outfile, min_separation=5):
+    N = scores.shape[0]
+    score_lst = []
+    for i in range(N-min_separation):
+        for j in range(i+min_separation, N):
+            score_lst.append((i+1, j+1, scores[i,j]))
+    score_lst.sort(key=itemgetter(2), reverse=True)
+    return score_lst
 
 
 def run(path, verbose=False):
