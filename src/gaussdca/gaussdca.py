@@ -6,7 +6,8 @@ from . import _load_data
 
 
 def _compute_FN(mJ, n_cols: int, alphabet_size: int):
-    s = alphabet_size - 1
+    # int8 * int8 may overflow, which cause negative dimension in FN_all
+    s = int(alphabet_size - 1)
 
     FN = np.zeros((n_cols, n_cols), dtype=np.float64)
     FN_all = np.zeros((n_cols, n_cols, s * s), dtype=np.float64)

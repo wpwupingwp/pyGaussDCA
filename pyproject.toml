@@ -1,0 +1,16 @@
+[project]
+name = "pygaussdca"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pip>=26.0.1",
+    "pythran>=0.18.1",
+    "scipy>=1.15.3",
+    "setuptools<82",
+]
+
+[[tool.uv.index]]
+url = "https://mirrors.bfsu.edu.cn/pypi/web/simple"
+default = true
