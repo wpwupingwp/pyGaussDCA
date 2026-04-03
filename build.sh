@@ -1,4 +1,5 @@
 #!/bin/bash
+rm -rf src/gaussdca/*.cpp
 rm -rf build/*
 rm -rf dist/gaussdca
 rm -rf dist/pygaussdca-0.1.0.dist-info
