@@ -15,3 +15,6 @@ do
     #uv run python3 setup.py build_ext
     uv run python3 setup.py bdist_wheel
 done
+cd dist
+rename 's/linux/manylinux_2_36/' *whl
+cd ..
