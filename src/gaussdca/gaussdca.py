@@ -15,10 +15,6 @@ VERSION = '1.0.0'
 log.remove()
 fmt = ('<green>{time:MM-DD HH:mm:ss}</green> | '
        '<level>{level: <8}</level> | '
-       # todo: remove in release version
-       # '<cyan>{name}</cyan>:'
-       # '<cyan>{function}</cyan>:'
-       # '<cyan>{line}</cyan> - '
        '<level>{message}</level>')
 log.add(stdout, colorize=True, format=fmt, level='INFO', filter=NAME,
         backtrace=True, enqueue=True)
@@ -64,14 +60,13 @@ def write_fasta(records: Iterable[tuple[str, str]], filename: Path) -> Path:
     return filename
 
 
-def fasta_to_array(records: Iterable[tuple[str, str]]) -> tuple[
-    np.ndarray, np.ndarray]:
-    records_ = list(records)
-    name_array = np.array([i[0] for i in records_], dtype=np.str_)
-    # S1 for 1 byte character, save more memory than 'U1' but
-    # encode/decode is required
-    seq_array = np.array([i[1] for i in records_], dtype=np.str_)
-    return name_array, seq_array
+def array_to_fasta(name_array: np.ndarray, seq_array: np.ndarray,
+                   output: Path) -> Path:
+    # convert dtype='S1' to strings
+    seq_list = list()
+    for row in seq_array:
+        seq_list.append(b''.join(row).decode('ascii'))
+    return write_fasta(zip(name_array, seq_list), output)
 
 
 def aln_to_array(records: Iterable[tuple[str, str]]) -> tuple[
@@ -117,6 +112,7 @@ def _compute_FN(mJ, n_cols: int, alphabet_size: int):
 
 
 def compute_ranking(scores, min_separation=5):
+    # from MMichel/GaussDCA
     N = scores.shape[0]
     score_list = list()
     for i in range(N-min_separation):
@@ -161,7 +157,7 @@ def run(align_file: str, verbose=False):
         for i, j, score in score_list:
             f.write(f'{i},{j},{score:.8f}\n')
     print(f'Output file: {output_file}')
-    return output_file
+    return score_list, output_file
 
 
 def compute_weights(path, theta=None):
@@ -176,18 +172,19 @@ def main():
     # aligned a3m or fasta (one line)
     align_file = Path(argv[1]).resolve()
     assert align_file.exists()
-    run(str(align_file), verbose=False)
+    score_list, score_txt = run(str(align_file), verbose=False)
     return
 
 def parse_args():
     arg = argparse.ArgumentParser()
     arg.add_argument('input', help='aligned protein sequence fasta file')
-    arg.add_argument('-s', '-score', dest='score', default=0.75,
+    arg.add_argument('-threshold', '-threshold', dest='threshold', default=0.75,
                      help='coevolution score threshold')
     return arg.parse_args()
 
 
 def main2():
+    # Calculate DCA score and split the alignment
     arg = parse_args()
     fasta = Path(arg.input).resolve()
     assert fasta.exists()
@@ -206,17 +203,17 @@ def main2():
     invariant_site = old_seq[:, invariant_index]
     # mutant_index = np.where(unique_counts > 1)[0]
 
-    fnr = call_julia(str(fasta))
-    # convert from numpy.void
-    np_array = np.array([list(i) for i in fnr.to_numpy()])
-    np.savetxt(result, np_array, fmt=['%d', '%d', '%.18e'])
+    score_list, score_txt = run(str(fasta), verbose=False)
+    np_array = np.array(score_list)
+    # fnr = call_julia(str(fasta))
+    # # convert from numpy.void
+    # np_array = np.array([list(i) for i in fnr.to_numpy()])
+    # np.savetxt(result, np_array, fmt=['%d', '%d', '%.18e'])
 
     # start with 1->0
     np_array[:, :2] -= 1
-    # todo: how to set threshold?
     # strong coupling
-    threshold = 0.75
-    np_array2 = np_array[np_array[:, 2] > threshold]
+    np_array2 = np_array[np_array[:, 2] > arg.threshold]
     all_index = set(np.arange(0, old_seq.shape[1]))
     co_index = set(np_array2[:, :2].flatten().astype(int))
     co_half_index = set(np_array2[:, 0].flatten().astype(int))
@@ -229,12 +226,6 @@ def main2():
     co_half_site = old_seq[:, list(co_half_index)]
     non_co_half_site = old_seq[:, list(non_co_half_index)]
     all_except_half_site = old_seq[:, list(all_except_half_index)]
-    print(old_seq.shape[1], 'columns\n',
-          np_array.shape[0], 'pairs\n',
-          np_array2.shape[0], 'pairs big score\n',
-          invariant_index.shape[0], 'invariant sites\n',
-          len(co_index), 'coevolution sites\n',
-          len(non_co_index), 'non-coevoled sites')
     array_to_fasta(name, co_site, co)
     array_to_fasta(name, non_co_site, non_co)
     array_to_fasta(name, invariant_site, invariant)
@@ -242,7 +233,15 @@ def main2():
     array_to_fasta(name, non_co_half_site, non_co_half)
     array_to_fasta(name, all_except_half_site, all_except_half_co)
     # print(result, co, non_co, co_half, non_co_half)
-    print('Done!')
+    log.info(f'{old_seq.shape[1]} columns')
+    log.info(f'np_array.shape[0], pairs')
+    log.info(f'{np_array2.shape[0]}, pairs big score')
+    log.info(f'{invariant_index.shape[0]} invariant sites')
+    log.info(f'{len(co_index)} coevolution sites')
+    log.info(f'{len(non_co_index)} non-coevolved sites')
+    log.info('Done!')
     return
+
+
 if __name__ == '__main__':
-    main()
+    main2()
