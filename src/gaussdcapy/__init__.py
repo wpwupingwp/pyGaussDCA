@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from . import _load_data
 from . import _gdca
 from .gaussdca import run, compute_weights
