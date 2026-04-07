@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 from typing import Iterable
-from sys import stdout, argv
+from sys import stdout
 
 import numpy as np
 from scipy import linalg
@@ -122,23 +122,17 @@ def compute_ranking(scores, min_separation=5):
     return score_list
 
 
-def _compute_gdca_scores(alignment, alignment_T, verbose, min_separation=5):
+def _compute_gdca_scores(alignment, alignment_T, min_separation=5):
     alphabet_size = alignment.max()
 
     n_cols = alignment_T.shape[1]
     depth = alignment_T.shape[0]
 
-    if verbose:
-        print('Prepare inputs')
     covar, meff = _gdca.prepare_covariance(alignment, alignment_T)
 
-    if verbose:
-        print('Invert matrix')
     cho = linalg.cho_factor(covar, check_finite=False)
     mJ = linalg.cho_solve(cho, np.eye(covar.shape[0]), check_finite=False, overwrite_b=True)
 
-    if verbose:
-        print('Compute Frobenius Norm')
     FN, FN_corr, FN_all = _compute_FN(mJ, n_cols, alphabet_size)
     covar_FN, covar_FN_corrected, covar_FN_all = _compute_FN(covar, n_cols, alphabet_size)
     results = dict(gdca=FN, gdca_corr=FN_corr, gdca_expanded=FN_all, eff_seq=meff, seq=depth,
@@ -147,16 +141,13 @@ def _compute_gdca_scores(alignment, alignment_T, verbose, min_separation=5):
     return results, score_list
 
 
-def run(align_file: str, verbose=False):
-    if verbose:
-        print('Loading data')
+def run(align_file: str):
     output_file = Path(align_file).with_suffix('.txt')
     align = _load_data.load_fasta(align_file)
-    results, score_list =  _compute_gdca_scores(np.ascontiguousarray(align), np.ascontiguousarray(align.T), verbose)
+    results, score_list =  _compute_gdca_scores(np.ascontiguousarray(align), np.ascontiguousarray(align.T))
     with open(output_file, 'w') as f:
         for i, j, score in score_list:
             f.write(f'{i},{j},{score:.8f}\n')
-    print(f'Output file: {output_file}')
     return score_list, output_file
 
 
@@ -168,13 +159,6 @@ def compute_weights(path, theta=None):
     return _gdca.compute_weights(np.ascontiguousarray(ali), np.ascontiguousarray(ali.T), theta)
 
 
-def main():
-    # aligned a3m or fasta (one line)
-    align_file = Path(argv[1]).resolve()
-    assert align_file.exists()
-    score_list, score_txt = run(str(align_file), verbose=False)
-    return
-
 def parse_args():
     arg = argparse.ArgumentParser()
     arg.add_argument('input', help='aligned protein sequence fasta file')
@@ -183,12 +167,14 @@ def parse_args():
     return arg.parse_args()
 
 
-def main2():
+def main():
     # Calculate DCA score and split the alignment
     arg = parse_args()
     fasta = Path(arg.input).resolve()
     assert fasta.exists()
-    result = fasta.with_suffix('.txt')
+    log.info(f'Input file: {fasta}')
+    log.info(f'Coevolution score threshold: {arg.threshold}')
+    output_file = fasta.with_suffix('.txt')
     co = fasta.with_suffix('.co.aln')
     non_co = fasta.with_suffix('.non_co.aln')
     co_half = fasta.with_suffix('.co_half.aln')
@@ -203,7 +189,7 @@ def main2():
     invariant_site = old_seq[:, invariant_index]
     # mutant_index = np.where(unique_counts > 1)[0]
 
-    score_list, score_txt = run(str(fasta), verbose=False)
+    score_list, score_txt = run(str(fasta))
     np_array = np.array(score_list)
     # fnr = call_julia(str(fasta))
     # # convert from numpy.void
@@ -234,14 +220,16 @@ def main2():
     array_to_fasta(name, all_except_half_site, all_except_half_co)
     # print(result, co, non_co, co_half, non_co_half)
     log.info(f'{old_seq.shape[1]} columns')
-    log.info(f'np_array.shape[0], pairs')
+    log.info(f'{np_array.shape[0]}, pairs')
     log.info(f'{np_array2.shape[0]}, pairs big score')
     log.info(f'{invariant_index.shape[0]} invariant sites')
     log.info(f'{len(co_index)} coevolution sites')
     log.info(f'{len(non_co_index)} non-coevolved sites')
+    log.info(f'Output score file: {output_file}')
+    log.info(f'Output alignments: {fasta.stem}.*.aln')
     log.info('Done!')
     return
 
 
 if __name__ == '__main__':
-    main2()
+    main()
