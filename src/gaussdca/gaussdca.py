@@ -3,7 +3,6 @@ from sys import argv
 
 import numpy as np
 from scipy import linalg
-from operator import itemgetter
 
 from . import _gdca
 from . import _load_data
@@ -46,7 +45,7 @@ def compute_ranking(scores, min_separation=5):
     for i in range(N-min_separation):
         for j in range(i+min_separation, N):
             score_list.append((i+1, j+1, scores[i,j]))
-    score_list.sort(key=itemgetter(2), reverse=True)
+    score_list.sort(key=lambda x:x[2], reverse=True)
     return score_list
 
 
@@ -79,18 +78,17 @@ def run(align_file: str, verbose=False):
     if verbose:
         print('Loading data')
     output_file = Path(align_file).with_suffix('.txt')
-    # align = _load_data.load_a3m(align_file)
     align = _load_data.load_fasta(align_file)
     results, score_list =  _compute_gdca_scores(np.ascontiguousarray(align), np.ascontiguousarray(align.T), verbose)
     with open(output_file, 'w') as f:
         for i, j, score in score_list:
-            f.write(f'{i},{j},{score}\n')
+            f.write(f'{i},{j},{score:.8f}\n')
     print(f'Output file: {output_file}')
     return output_file
 
 
 def compute_weights(path, theta=None):
-    ali = _load_data.load_a3m(path)
+    ali = _load_data.load_fasta(path)
     if theta is None:
         theta = -1.
 
