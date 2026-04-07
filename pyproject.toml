@@ -9,12 +9,16 @@ readme = "README.md"
 license = { text = "AGPL-3.0" }
 requires-python = ">=3.10"
 dependencies = [
-    "pip>=26.0.1",
-    "pythran>=0.18.1",
     "scipy>=1.15.3",
-    "setuptools<82",
 ]
 
 [[tool.uv.index]]
 url = "https://mirrors.bfsu.edu.cn/pypi/web/simple"
 default = true
+
+[dependency-groups]
+dev = [
+    "pip>=26.0.1",
+    "pythran>=0.18.1",
+    "setuptools<82",
+]
