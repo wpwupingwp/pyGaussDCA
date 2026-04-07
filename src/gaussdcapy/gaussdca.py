@@ -10,7 +10,7 @@ from loguru import logger as log
 from . import _gdca
 from . import _load_data
 
-NAME = 'GaussDCApy'
+NAME = 'gaussdcapy'
 VERSION = '1.0.0'
 log.remove()
 fmt = ('<green>{time:MM-DD HH:mm:ss}</green> | '
@@ -223,12 +223,12 @@ def gaussdca_main():
     array_to_fasta(name, non_co_half_site, non_co_half)
     array_to_fasta(name, all_except_half_site, all_except_half_co)
     # print(result, co, non_co, co_half, non_co_half)
-    log.info(f'{old_seq.shape[1]} columns')
-    log.info(f'{np_array.shape[0]}, pairs')
-    log.info(f'{np_array2.shape[0]}, pairs big score')
+    log.info(f'{old_seq.shape[1]} columns in alignment')
+    log.info(f'{np_array.shape[0]} pairs are coevolution')
+    log.info(f'{np_array2.shape[0]} pairs have high score')
     log.info(f'{invariant_index.shape[0]} invariant sites')
-    log.info(f'{len(co_index)} coevolution sites')
     log.info(f'{len(non_co_index)} non-coevolved sites')
+    log.info(f'{len(co_index)} coevolved sites')
     log.info(f'Output score file: {output_file}')
     log.info(f'Output alignments: {fasta.stem}.*.aln')
     log.info('Done!')

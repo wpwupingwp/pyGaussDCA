@@ -15,7 +15,7 @@ module_gdca = PythranExtension('gaussdcapy._gdca', sources=['src/gaussdcapy/_gdc
                                extra_link_args=['-fopenmp'])
 
 # Main setup:
-setup(name='GaussDCApy', version='1.00',
+setup(name='gaussdcapy', version='1.0.0',
       description='Reimplementation of pyGaussDCA',
       url='https://github.com/wpwupingwp/pyGaussDCA/',
       author='Ping Wu',
