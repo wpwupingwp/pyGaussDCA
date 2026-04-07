@@ -15,6 +15,8 @@ Used output function from https://github.com/MMichel/GaussDCA.
 pip install gaussdcapy
 python3 -m gaussdcapy input.fasta
 ```
+If there is no valid wheel files, see `build.sh` for building the package from
+source.
 
 ## Compatibility
 Currently only support Linux due to pythran compile failed in Windows.
