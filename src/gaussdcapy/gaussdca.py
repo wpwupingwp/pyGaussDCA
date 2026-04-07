@@ -11,7 +11,7 @@ from . import _gdca
 from . import _load_data
 
 NAME = 'gaussdcapy'
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 log.remove()
 fmt = ('<green>{time:MM-DD HH:mm:ss}</green> | '
        '<level>{level: <8}</level> | '
