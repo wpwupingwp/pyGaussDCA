@@ -79,7 +79,8 @@ def run(align_file: str, verbose=False):
     if verbose:
         print('Loading data')
     output_file = Path(align_file).with_suffix('.txt')
-    align = _load_data.load_a3m(align_file)
+    # align = _load_data.load_a3m(align_file)
+    align = _load_data.load_fasta(align_file)
     results, score_list =  _compute_gdca_scores(np.ascontiguousarray(align), np.ascontiguousarray(align.T), verbose)
     with open(output_file, 'w') as f:
         for i, j, score in score_list:
