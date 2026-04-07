@@ -1,6 +1,6 @@
 [project]
-name = "pygaussdca2"
-version = "0.1.0"
+name = "GaussDCApy"
+version = "1.0.0"
 description = "Reimplmentation of pyGaussDCA"
 authors = [
     { name = "Ping Wu", email = "wpwupingwp@outlook.com" },

@@ -167,11 +167,16 @@ def parse_args():
     return arg.parse_args()
 
 
-def main():
+def gaussdca_main():
     # Calculate DCA score and split the alignment
     arg = parse_args()
     fasta = Path(arg.input).resolve()
     assert fasta.exists()
+    try:
+        name, old_seq = aln_to_array(parse_fasta(fasta))
+    except Exception:
+        log.error(f'Bad alignment input {fasta}')
+        raise SystemExit(-1)
     log.info(f'Input file: {fasta}')
     log.info(f'Coevolution score threshold: {arg.threshold}')
     output_file = fasta.with_suffix('.txt')
@@ -182,7 +187,6 @@ def main():
     invariant = fasta.with_suffix('.invariant.aln')
     all_except_half_co = fasta.with_suffix('.all_except_half_co.aln')
 
-    name, old_seq = aln_to_array(parse_fasta(fasta))
     unique_counts = np.array(
         [len(np.unique(old_seq[:, i])) for i in range(old_seq.shape[1])])
     invariant_index = np.where(unique_counts == 1)[0]
@@ -232,4 +236,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    gaussdca_main()
