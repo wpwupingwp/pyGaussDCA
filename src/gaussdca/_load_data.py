@@ -51,22 +51,22 @@ def parse_fasta(fasta_file: str, max_gap_fraction=0.9):
                'V': 18, 'W': 19, 'Y': 20,
                'U': 21, 'Z': 21, 'X': 21, 'J': 21}
     seqs = list()
-    with open(fasta_file, 'r') as f:
-        record = []
-        for line_raw in f:
-            line = line_raw.strip()
-            if line.startswith('>'):
-                if len(record) != 0:
-                    join_str = ''.join(record)
-                    if len(join_str.strip()) != 0:
-                        seqs.append(join_str.upper())
-                    record.clear()
-            else:
-                record.append(line)
-        if len(record) != 0:
-            join_str = ''.join(record)
-            if len(join_str.strip()) != 0:
-                seqs.append(join_str)
+    f = open(fasta_file, 'r')
+    record = []
+    for line_raw in f:
+        line = line_raw.strip()
+        if line.startswith('>'):
+            if len(record) != 0:
+                join_str = ''.join(record)
+                if len(join_str.strip()) != 0:
+                    seqs.append(join_str.upper())
+                record.clear()
+        else:
+            record.append(line)
+    if len(record) != 0:
+        join_str = ''.join(record)
+        if len(join_str.strip()) != 0:
+            seqs.append(join_str)
     parsed = []
     for seq in seqs:
         if seq.count('-')/len(seq) >= max_gap_fraction:
@@ -74,5 +74,6 @@ def parse_fasta(fasta_file: str, max_gap_fraction=0.9):
         mapped_seq = [mapping.get(i, 22) for i in seq]
         parsed.append(mapped_seq)
     assert len(parsed)>0
+    f.close()
     return np.array(parsed, dtype=np.int8).T
 
